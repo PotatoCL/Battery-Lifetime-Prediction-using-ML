@@ -1,0 +1,101 @@
+# Training configuration for battery performance prediction
+
+data:
+  raw_path: "data/raw"
+  processed_path: "data/processed"
+  sequence_length: 50
+  test_split: 0.2
+  val_split: 0.1
+  random_seed: 42
+
+features:
+  window_sizes: [5, 10, 20]
+  include_lagged: true
+  lag_values: [1, 5, 10]
+  include_interactions: true
+
+cyclepatch:
+  patch_size: 10
+  stride: 5
+  embed_dim: 128
+  max_cycles: 2000
+
+model:
+  input_dim: null  # Set dynamically based on features
+  hidden_dim: 256
+  num_layers: 3
+  num_heads: 8  # For transformer
+  dropout: 0.2
+  feedforward_dim: 1024  # For transformer
+
+training:
+  max_epochs: 100
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 32
+  early_stopping_patience: 15
+  gradient_clip: 1.0
+  accumulate_grad_batches: 1
+  precision: 16  # Mixed precision training
+  scheduler: "plateau"  # or "cosine"
+  
+  # Loss weights for multi-task learning
+  loss_weights:
+    rul: 1.0
+    soh: 1.5  # Higher weight for SOH
+    soc: 1.0
+    capacity: 1.2
+
+optimization:
+  optimizer: "adamw"
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  
+  # Learning rate scheduler
+  scheduler:
+    type: "reduce_on_plateau"
+    factor: 0.5
+    patience: 10
+    min_lr: 1.0e-6
+    
+    # Alternative: cosine annealing
+    # type: "cosine"
+    # T_max: 100
+    # eta_min: 1.0e-6
+
+evaluation:
+  metrics:
+    - mae
+    - rmse
+    - mape
+    - r2
+  
+  # RUL-specific
+  rul_metrics:
+    - alpha_lambda
+    - prognostic_horizon
+  
+  # SOH-specific
+  soh_metrics:
+    - eol_error
+    - degradation_rate_error
+
+logging:
+  log_every_n_steps: 10
+  save_plots: true
+  plot_format: "png"
+  dpi: 300
+
+hardware:
+  num_workers: 4
+  pin_memory: true
+  persistent_workers: true
+
+experiment:
+  name: "battery_prediction"
+  seed: 42
+  deterministic: true
+  tags:
+    - "cyclepatch"
+    - "multi-task"
+    - "nasa-battery"
