@@ -161,6 +161,8 @@ class CPTransformer(BatteryPredictionModel):
         }
         
         return predictions
+        
+        return predictions
     
     def _forward_single(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
         """Forward pass for single time step input."""
